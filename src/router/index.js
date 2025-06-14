@@ -39,6 +39,54 @@ const router = createRouter({
       component: () => import("@/pages/DocumentForms.vue"),
     },
     // ADD MORE IN HERE USING THE {  Path: ‘/’},
+
+
+
+
+
+
+    // DOCUMENT FORMS IN HERE BELOW
+
+     // DOCUMENT FORMS IN HERE BELOW
+
+    {
+      path: "/electrical",
+      name: "electrical",
+      component: () => import("@/document/electrical.vue"),
+    },
+
+    {
+      path: "/sanitary",
+      name: "sanitary",
+      component: () => import("@/document/sanitary.vue"),
+    },
+
+    {
+      path: "/architectural",
+      name: "architectural",
+      component: () => import("@/document/architectural.vue"),
+    },
+
+    {
+      path: "/structural",
+      name: "structural",
+      component: () => import("@/document/structural.vue"),
+    },
+
+    {
+      path: "/mechanical",
+      name: "mechanical",
+      component: () => import("@/document/mechanical.vue"),
+    },
+
+    {
+      path: "/electronics",
+      name: "electronics",
+      component: () => import("@/document/electronics.vue"),
+    },
+
+
+
   ],
 });
 

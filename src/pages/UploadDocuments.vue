@@ -25,8 +25,7 @@
       <v-card-title class="text-h6 mb-4">Upload Documents</v-card-title>
       <v-card-text>
         <p class="mb-4">
-          Please upload the required documents for your application.
-          The fields below are dynamically generated based on your previous selections.
+          Please upload all required documents for your application. If a document type is not applicable to your project, you may leave that field blank.
         </p>
 
         <v-file-input
@@ -51,15 +50,19 @@
           class="mb-4"
         ></v-file-input>
 
-        <div v-for="docType in selectedDocuments" :key="docType" class="mb-4">
+        <v-divider class="my-6"></v-divider>
+
+        <p class="mb-4 text-subtitle-1">Ancillary Documents</p>
+
+        <div v-for="docOption in allDocumentUploadOptions" :key="docOption.value" class="mb-4">
           <v-file-input
-            :label="`Upload ${formatDocumentTypeName(docType)} Documents (PDFs)`"
+            :label="`Upload ${docOption.label} (PDFs)`"
             accept="application/pdf"
             multiple
             variant="outlined"
             prepend-icon="mdi-paperclip"
             clearable
-            v-model="uploadedAncillaryDocuments[docType]"
+            v-model="uploadedAncillaryDocuments[docOption.value]"
           ></v-file-input>
         </div>
       </v-card-text>
@@ -86,70 +89,108 @@ const router = useRouter();
 // Reactive state for uploaded files
 const unifiedApplicationPdf = ref([]);
 const generalClearancesPdf = ref([]);
-const uploadedAncillaryDocuments = reactive({}); // Use reactive object to store files for each ancillary document type
+// Reactive object to store files for each ancillary document type
+const uploadedAncillaryDocuments = reactive({});
 
-// selectedDocuments from query parameters
-const selectedDocuments = ref([]);
+// All possible ancillary document upload options
+const allDocumentUploadOptions = [
+  { label: "Architectural Documents", value: "architectural" },
+  { label: "Civil/Structural Documents", value: "civil_structural" },
+  { label: "Electrical Documents", value: "electrical" },
+  { label: "Sanitary Documents", value: "sanitary" },
+  { label: "Plumbing Documents", value: "plumbing" },
+  { label: "Mechanical Documents", value: "mechanical" },
+  { label: "Electronics Documents", value: "electronics" },
+  { label: "Geodetic Documents", value: "geodetic" },
+];
 
-// Function to format document type names for display
-const formatDocumentTypeName = (docType) => {
-  return docType
-    .replace('_', ' ')
-    .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
+// Initialize all ancillary document upload models on component mount
+onMounted(() => {
+  allDocumentUploadOptions.forEach(option => {
+    uploadedAncillaryDocuments[option.value] = [];
+  });
+});
 
 const goToPreviousStep = () => {
   // Navigate back to DocumentForms, preserving prepopulated data
   router.push({
-    path: '/', // Assuming DocumentForms is at the root or a defined route like '/document-forms'
+    path: '/', // Adjust this path if your DocumentForms component is on a different route, e.g., '/document-forms'
     query: {
       applicantFullName: route.query.applicantFullName,
       projectFullAddress: route.query.projectFullAddress,
-      // You might want to pass back the selectedDocuments if the DocumentForms component
-      // doesn't persist them or fetch them otherwise. For now, assume it handles its own state.
+      // No need to pass selectedDocuments back for dynamic generation in this approach
     }
   });
 };
 
-const finalizeApplication = () => {
-  // Here you would typically handle the submission of all uploaded files.
-  // This might involve:
-  // 1. Creating FormData objects
-  // 2. Sending files to a backend API (e.g., using Axios or Fetch)
-  // 3. Displaying a success/error message
-  // 4. Redirecting the user to a confirmation page
+const finalizeApplication = async () => {
+  console.log("Finalizing application and preparing files for upload...");
 
-  console.log("Finalizing application...");
-  console.log("Unified Application PDF:", unifiedApplicationPdf.value);
-  console.log("General Clearances PDF:", generalClearancesPdf.value);
-  console.log("Uploaded Ancillary Documents:", uploadedAncillaryDocuments);
+  const formData = new FormData();
 
-  // Example: Basic alert for demonstration
-  alert("Application finalized! (Files would be uploaded here)");
-  // router.push('/application-success'); // Example redirection
-};
+  // Append Unified Application PDF(s)
+  if (unifiedApplicationPdf.value.length > 0) {
+    unifiedApplicationPdf.value.forEach((file) => {
+      formData.append('unifiedApplicationForm', file);
+    });
+  }
 
-onMounted(() => {
-  // Parse the selectedDocuments from the query parameter
-  if (route.query.selectedDocuments) {
-    try {
-      selectedDocuments.value = JSON.parse(route.query.selectedDocuments);
-      // Initialize reactive properties for each selected document type
-      selectedDocuments.value.forEach(docType => {
-        uploadedAncillaryDocuments[docType] = [];
+  // Append General Clearances PDF(s)
+  if (generalClearancesPdf.value.length > 0) {
+    generalClearancesPdf.value.forEach((file) => {
+      formData.append('generalClearances', file);
+    });
+  }
+
+  // Append all Ancillary Documents that have files attached
+  for (const docType in uploadedAncillaryDocuments) {
+    if (uploadedAncillaryDocuments[docType] && uploadedAncillaryDocuments[docType].length > 0) {
+      uploadedAncillaryDocuments[docType].forEach((file) => {
+        // Use a consistent naming convention for backend: e.g., 'architecturalFiles[]'
+        formData.append(`${docType}Files[]`, file);
       });
-    } catch (e) {
-      console.error("Failed to parse selectedDocuments query parameter:", e);
-      selectedDocuments.value = [];
     }
   }
-});
+
+  // Optionally, append other data like applicant info if not already sent
+  formData.append('applicantFullName', route.query.applicantFullName || '');
+  formData.append('projectFullAddress', route.query.projectFullAddress || '');
+  // You might still want to send which types were *expected* even if all fields are shown
+  // This depends on how your backend processes the submission.
+  // If the "selectedDocuments" from the previous step is still relevant for backend logic,
+  // ensure it's passed here, or derive it from the uploaded files.
+
+  // --- Example: Sending data to a mock API endpoint ---
+  // In a real application, you'd replace this with your actual backend API call.
+  try {
+    // Replace '/api/upload-documents' with your actual backend endpoint
+    const response = await fetch('/api/upload-documents', {
+      method: 'POST',
+      body: formData,
+      // The 'Content-Type': 'multipart/form-data' header is usually
+      // automatically set by the browser when you use FormData.
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      alert("Application submitted successfully!");
+      console.log("Upload successful:", result);
+      // Redirect to a success page or provide further instructions
+      // router.push('/application-success');
+    } else {
+      const errorData = await response.json();
+      alert(`Submission failed: ${errorData.message || response.statusText}`);
+      console.error("Upload failed:", errorData);
+    }
+  } catch (error) {
+    alert("An error occurred during submission. Please try again.");
+    console.error("Network or submission error:", error);
+  }
+};
 </script>
 
 <style scoped>
-/* Stepper styles from DocumentForms for consistency */
+/* Stepper styles for consistency */
 .stepper-container {
   display: flex;
   align-items: center;

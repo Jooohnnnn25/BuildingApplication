@@ -20,517 +20,136 @@
         </div>
       </v-col>
     </v-row>
+
     <v-card class="mb-8 pa-6" elevation="2">
       <v-card-title class="text-h6 mb-4">Select Required Documents</v-card-title>
       <v-card-text class="pa-0">
-        <p class="mb-4">Please select the types of documents you will be submitting:</p>
+        <p class="mb-4">Click on a document type to fill out its specific form:</p>
         <v-row dense>
-          <v-col cols="12" md="4" v-for="option in documentChecklistOptions" :key="option.value">
-            <v-checkbox
-              :label="option.label"
-              :value="option.value"
-              v-model="selectedDocuments"
-              density="compact"
-              hide-details
-            ></v-checkbox>
+          <v-col cols="12" sm="6" md="4" v-for="option in documentChecklistOptions" :key="option.label">
+            <v-card
+              class="document-card pa-4 d-flex flex-column align-center justify-center text-center"
+              @click="navigateToDocumentForm(option.value)"
+              outlined
+              hover
+              :class="{ 'completed-card': isDocumentCompleted(option.value), 'not-completed-card': !isDocumentCompleted(option.value) && selectedDocuments.includes(option.value) }"
+            >
+              <v-icon size="48" :color="getIconColor(option.value)">{{ option.icon }}</v-icon>
+              <div class="text-subtitle-1 mt-2">{{ option.label }}</div>
+              <v-chip
+                v-if="isDocumentCompleted(option.value)"
+                color="success"
+                variant="flat"
+                size="small"
+                class="mt-2"
+              >
+                <v-icon start icon="mdi-check-circle"></v-icon>
+                Completed
+              </v-chip>
+            </v-card>
           </v-col>
         </v-row>
       </v-card-text>
     </v-card>
 
-    <v-form @submit.prevent="downloadForms">
-      <v-card v-if="selectedDocuments.includes('architectural')" class="mb-8 pa-6" elevation="2">
-        <v-card-title class="text-h6 mb-4">Architectural Documents Form</v-card-title>
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Applicant Name"
-              v-model="prepopulatedData.applicantFullName"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Project Address"
-              v-model="prepopulatedData.projectFullAddress"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-text-field
-              label="Architectural Project Type"
-              v-model="architecturalProjectType.value.value"
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-textarea
-              label="Architectural Scope Details"
-              v-model="architecturalScopeDetails.value.value"
-              density="compact"
-              variant="outlined"
-            ></v-textarea>
-          </v-col>
-        </v-row>
-      </v-card>
-
-      <v-card v-if="selectedDocuments.includes('civil_structural')" class="mb-8 pa-6" elevation="2">
-        <v-card-title class="text-h6 mb-4">Civil/Structural Documents Form</v-card-title>
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Applicant Name"
-              v-model="prepopulatedData.applicantFullName"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Project Address"
-              v-model="prepopulatedData.projectFullAddress"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-text-field
-              label="Structural Type"
-              v-model="structuralType.value.value"
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-textarea
-              label="Civil/Structural Notes"
-              v-model="civilStructuralNotes.value.value"
-              density="compact"
-              variant="outlined"
-            ></v-textarea>
-          </v-col>
-        </v-row>
-      </v-card>
-
-      <v-card v-if="selectedDocuments.includes('electrical')" class="mb-8 pa-6" elevation="2">
-        <v-card-title class="text-h6 mb-4">Electrical Documents Form</v-card-title>
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Applicant Name"
-              v-model="prepopulatedData.applicantFullName"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Project Address"
-              v-model="prepopulatedData.projectFullAddress"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-text-field
-              label="Electrical Load (kW)"
-              v-model="electricalLoad.value.value"
-              type="number"
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-text-field
-              label="Number of Outlets"
-              v-model="numberOfOutlets.value.value"
-              type="number"
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-        </v-row>
-      </v-card>
-
-      <v-card v-if="selectedDocuments.includes('sanitary')" class="mb-8 pa-6" elevation="2">
-        <v-card-title class="text-h6 mb-4">Sanitary Documents Form</v-card-title>
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Applicant Name"
-              v-model="prepopulatedData.applicantFullName"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Project Address"
-              v-model="prepopulatedData.projectFullAddress"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-text-field
-              label="Water Supply Source"
-              v-model="waterSupplySource.value.value"
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-text-field
-              label="Waste Disposal Method"
-              v-model="wasteDisposalMethod.value.value"
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-        </v-row>
-      </v-card>
-
-      <v-card v-if="selectedDocuments.includes('plumbing')" class="mb-8 pa-6" elevation="2">
-        <v-card-title class="text-h6 mb-4">Plumbing Documents Form</v-card-title>
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Applicant Name"
-              v-model="prepopulatedData.applicantFullName"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Project Address"
-              v-model="prepopulatedData.projectFullAddress"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-text-field
-              label="Number of Fixtures"
-              v-model="numberOfFixtures.value.value"
-              type="number"
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-text-field
-              label="Plumbing System Type"
-              v-model="plumbingSystemType.value.value"
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-        </v-row>
-      </v-card>
-
-      <v-card v-if="selectedDocuments.includes('mechanical')" class="mb-8 pa-6" elevation="2">
-        <v-card-title class="text-h6 mb-4">Mechanical Documents Form</v-card-title>
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Applicant Name"
-              v-model="prepopulatedData.applicantFullName"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Project Address"
-              v-model="prepopulatedData.projectFullAddress"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-text-field
-              label="HVAC System Type"
-              v-model="hvacSystemType.value.value"
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-text-field
-              label="Elevator/Escalator Count"
-              v-model="elevatorEscalatorCount.value.value"
-              type="number"
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-        </v-row>
-      </v-card>
-
-      <v-card v-if="selectedDocuments.includes('electronics')" class="mb-8 pa-6" elevation="2">
-        <v-card-title class="text-h6 mb-4">Electronics Documents Form</v-card-title>
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Applicant Name"
-              v-model="prepopulatedData.applicantFullName"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Project Address"
-              v-model="prepopulatedData.projectFullAddress"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-text-field
-              label="CCTV Camera Count"
-              v-model="cctvCameraCount.value.value"
-              type="number"
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-text-field
-              label="Fire Alarm System Type"
-              v-model="fireAlarmSystemType.value.value"
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-        </v-row>
-      </v-card>
-
-      <v-card v-if="selectedDocuments.includes('geodetic')" class="mb-8 pa-6" elevation="2">
-        <v-card-title class="text-h6 mb-4">Geodetic Documents Form</v-card-title>
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Applicant Name"
-              v-model="prepopulatedData.applicantFullName"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              label="Project Address"
-              v-model="prepopulatedData.projectFullAddress"
-              readonly
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-text-field
-              label="Survey Type"
-              v-model="surveyType.value.value"
-              density="compact"
-              variant="outlined"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12">
-            <v-textarea
-              label="Boundary Descriptions"
-              v-model="boundaryDescriptions.value.value"
-              density="compact"
-              variant="outlined"
-            ></v-textarea>
-          </v-col>
-        </v-row>
-      </v-card>
-
-      <v-row justify="end" class="mt-4">
-        <v-col cols="auto">
-          <v-btn color="grey-darken-1" @click="handleResetDocumentForms">Reset Forms</v-btn>
-        </v-col>
-        <v-col cols="auto">
-          <v-btn color="primary" type="submit">Download Forms</v-btn>
-        </v-col>
-        <v-col cols="auto">
-          <v-btn color="grey-darken-1" @click="emit('previous-step')" to="/UnifiedAppliationForm">Previous Step</v-btn>
-        </v-col>
-        <v-col cols="auto">
-          <v-btn color="primary" @click="goToNextStep">Next Step</v-btn>
-        </v-col>
-      </v-row>
-    </v-form>
+    <v-row justify="end" class="mt-4">
+      <v-col cols="auto">
+        <v-btn color="grey-darken-1" @click="emit('previous-step')" to="/UnifiedAppliationForm">Previous Step</v-btn>
+      </v-col>
+      <v-col cols="auto">
+        <v-btn color="primary" @click="goToNextStep">Next Step</v-btn>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
 <script setup>
-import { defineProps, defineEmits, defineModel, onMounted, reactive } from 'vue';
-import { useField } from 'vee-validate';
-import { useRoute, useRouter } from 'vue-router'; // Import useRouter
+import { defineEmits, defineModel, onMounted, reactive, ref } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
 const route = useRoute();
-const router = useRouter(); // Initialize useRouter
+const router = useRouter();
 
-// defineEmits is already correctly defined
 const emit = defineEmits(['update:selected-documents', 'next-step', 'previous-step']);
 
-// defineModel is perfect for two-way binding with the parent
+// `selectedDocuments` will track which forms have been accessed or 'completed'
 const selectedDocuments = defineModel('selectedDocuments', { type: Array, required: true, default: () => [] });
+
+// New reactive state to track truly completed documents
+// Using a Set for efficient add/check operations
+const completedDocuments = ref(new Set());
 
 const prepopulatedData = reactive({
   applicantFullName: '',
   projectFullAddress: '',
 });
 
-// --- NEW FIELDS for Document Forms (Stepper 2) ---
-const architecturalProjectType = useField("architecturalProjectType");
-const architecturalScopeDetails = useField("architecturalScopeDetails");
-const structuralType = useField("structuralType");
-const civilStructuralNotes = useField("civilStructuralNotes");
-const electricalLoad = useField("electricalLoad");
-const numberOfOutlets = useField("numberOfOutlets");
-const waterSupplySource = useField("waterSupplySource");
-const wasteDisposalMethod = useField("wasteDisposalMethod");
-const numberOfFixtures = useField("numberOfFixtures");
-const plumbingSystemType = useField("plumbingSystemType");
-const hvacSystemType = useField("hvacSystemType");
-const elevatorEscalatorCount = useField("elevatorEscalatorCount");
-const cctvCameraCount = useField("cctvCameraCount");
-const fireAlarmSystemType = useField("fireAlarmSystemType");
-const surveyType = useField("surveyType");
-const boundaryDescriptions = useField("boundaryDescriptions");
-
 const documentChecklistOptions = [
-  { label: "Architectural Document", value: "architectural" },
-  { label: "Civil/Structural Documents", value: "civil_structural" },
-  { label: "Electrical Documents", value: "electrical" },
-  { label: "Sanitary Documents", value: "sanitary" },
-  { label: "Plumbing Documents", "value": "plumbing" },
-  { label: "Mechanical Documents", value: "mechanical" },
-  { label: "Electronics Documents", value: "electronics" },
-  { label: "Geodetic Documents", value: "geodetic" },
+  { label: "Architectural Document", value: "architectural", icon: "mdi-pencil" },
+  { label: "Civil/Structural Documents", value: "structural", icon: "mdi-hammer-wrench" },
+  { label: "Electrical Documents", value: "electrical", icon: "mdi-lightning-bolt" },
+  { label: "Sanitary Documents", value: "sanitary", icon: "mdi-faucet" },
+  // *** MODIFICATION HERE: "Plumbing Documents" now has value "sanitary" ***
+  { label: "Plumbing Documents", value: "sanitary", icon: "mdi-pipe-wrench" },
+  { label: "Mechanical Documents", value: "mechanical", icon: "mdi-fan" },
+  { label: "Electronics Documents", value: "electronics", icon: "mdi-television-classic" },
+
 ];
 
-const handleResetDocumentForms = () => {
-  architecturalProjectType.value.value = "";
-  architecturalScopeDetails.value.value = "";
-  structuralType.value.value = "";
-  civilStructuralNotes.value.value = "";
-  electricalLoad.value.value = null;
-  numberOfOutlets.value.value = null;
-  waterSupplySource.value.value = "";
-  wasteDisposalMethod.value.value = "";
-  numberOfFixtures.value.value = null;
-  plumbingSystemType.value.value = "";
-  hvacSystemType.value.value = "";
-  elevatorEscalatorCount.value.value = null;
-  cctvCameraCount.value.value = null;
-  fireAlarmSystemType.value.value = "";
-  surveyType.value.value = "";
-  boundaryDescriptions.value.value = "";
-  selectedDocuments.value = []; // This will update the parent due to defineModel
+// Determine if a document is completed
+const isDocumentCompleted = (docValue) => {
+  return completedDocuments.value.has(docValue);
 };
 
-const downloadForms = () => {
-  if (selectedDocuments.value.length === 0) {
-    alert("Please select at least one document type to download forms.");
-    return;
+// Function to determine the icon color based on completion status
+const getIconColor = (docValue) => {
+  if (isDocumentCompleted(docValue)) {
+    return 'success'; // Green for completed
+  } else if (selectedDocuments.value.includes(docValue)) {
+    return 'primary'; // Blue for selected/visited (but not yet completed)
+  }
+  return 'grey'; // Grey for unvisited
+};
+
+// Function to navigate to the specific document form page
+const navigateToDocumentForm = (docType) => {
+  // Add the document type to selectedDocuments if not already present.
+  // Both 'sanitary' and 'plumbing' cards will push 'sanitary' to selectedDocuments
+  if (!selectedDocuments.value.includes(docType)) {
+    selectedDocuments.value.push(docType);
   }
 
-  const formData = {
-    ancillaryDocuments: {},
-  };
-
-  for (const docType of selectedDocuments.value) {
-    let docData = {
-      applicantName: prepopulatedData.applicantFullName,
-      projectAddress: prepopulatedData.projectFullAddress,
-    };
-
-    switch (docType) {
-      case "architectural":
-        docData.projectType = architecturalProjectType.value.value;
-        docData.scopeDetails = architecturalScopeDetails.value.value;
-        break;
-      case "civil_structural":
-        docData.structuralType = structuralType.value.value;
-        docData.notes = civilStructuralNotes.value.value;
-        break;
-      case "electrical":
-        docData.electricalLoad = electricalLoad.value.value;
-        docData.numberOfOutlets = numberOfOutlets.value.value;
-        break;
-      case "sanitary":
-        docData.waterSupplySource = waterSupplySource.value.value;
-        docData.wasteDisposalMethod = wasteDisposalMethod.value.value;
-        break;
-      case "plumbing":
-        docData.numberOfFixtures = numberOfFixtures.value.value;
-        docData.systemType = plumbingSystemType.value.value;
-        break;
-      case "mechanical":
-        docData.hvacSystemType = hvacSystemType.value.value;
-        docData.elevatorEscalatorCount = elevatorEscalatorCount.value.value;
-        break;
-      case "electronics":
-        docData.cctvCameraCount = cctvCameraCount.value.value;
-        docData.fireAlarmSystemType = fireAlarmSystemType.value.value;
-        break;
-      case "geodetic":
-        docData.surveyType = surveyType.value.value;
-        docData.boundaryDescriptions = boundaryDescriptions.value.value;
-        break;
+  // Use the exact `docType` as the path.
+  // If docType is 'sanitary' (from either sanitary or plumbing card), it routes to /sanitary
+  router.push({
+    path: `/${docType}`,
+    query: {
+      applicantFullName: prepopulatedData.applicantFullName,
+      projectFullAddress: prepopulatedData.projectFullAddress,
+      selectedDocuments: JSON.stringify(selectedDocuments.value),
+      completedDocuments: JSON.stringify(Array.from(completedDocuments.value)),
     }
-    formData.ancillaryDocuments[docType] = docData;
-  }
-
-  const filename = `Ancillary_Documents_Data_${Date.now()}.json`;
-  const jsonStr = JSON.stringify(formData, null, 2);
-  const blob = new Blob([jsonStr], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  alert("Selected forms data downloaded successfully as JSON!");
+  });
 };
 
 const goToNextStep = () => {
-  // Pass selectedDocuments as a JSON string in query parameters
   router.push({
     path: '/UploadDocuments',
     query: {
       selectedDocuments: JSON.stringify(selectedDocuments.value),
+      completedDocuments: JSON.stringify(Array.from(completedDocuments.value)),
       applicantFullName: prepopulatedData.applicantFullName,
       projectFullAddress: prepopulatedData.projectFullAddress,
     }
   });
 };
 
-// IMPORTANT: Lifecycle hook to read query parameters when the component is mounted
+// This function would be called by the individual document forms upon successful submission
+const markDocumentAsCompleted = (docType) => {
+  completedDocuments.value.add(docType);
+};
+
+// Lifecycle hook to read query parameters when the component is mounted
 onMounted(() => {
   if (route.query.applicantFullName) {
     prepopulatedData.applicantFullName = route.query.applicantFullName;
@@ -538,11 +157,49 @@ onMounted(() => {
   if (route.query.projectFullAddress) {
     prepopulatedData.projectFullAddress = route.query.projectFullAddress;
   }
+
+  // Restore selectedDocuments from query
+  if (route.query.selectedDocuments) {
+    try {
+      selectedDocuments.value = JSON.parse(route.query.selectedDocuments);
+    } catch (e) {
+      console.error("Error parsing selectedDocuments from query:", e);
+    }
+  }
+
+  // Restore completedDocuments from query (coming back from a form)
+  if (route.query.completedDocuments) {
+    try {
+      const storedCompleted = JSON.parse(route.query.completedDocuments);
+      completedDocuments.value = new Set(storedCompleted);
+    } catch (e) {
+      console.error("Error parsing completedDocuments from query:", e);
+      completedDocuments.value = new Set();
+    }
+  }
+
+  // --- Simulate completion for demonstration purposes ---
+  // If we just came from an individual form, mark it as completed after a delay.
+  // In a real app, this logic belongs inside the individual document form's submission handler.
+  const allPossibleDocValues = documentChecklistOptions.map(option => option.value);
+  const currentRouteDocType = allPossibleDocValues.find(docValue => route.path === `/${docValue}`);
+
+  if (currentRouteDocType && !isDocumentCompleted(currentRouteDocType)) {
+    // A small hack to check if the route.path matches any of the document values.
+    // This is because the route.path will be `/sanitary` for both sanitary and plumbing cards.
+    // We only want to mark 'sanitary' as completed here, not both, unless your logic
+    // intends for both to be separately tracked as 'completed'.
+    // Given 'Plumbing' routes to 'Sanitary', only 'sanitary' will be marked.
+    setTimeout(() => {
+      markDocumentAsCompleted(currentRouteDocType);
+      console.log(`Document form for ${currentRouteDocType} simulated as completed.`);
+    }, 500); // Simulate completion after 0.5 seconds
+  }
 });
 </script>
 
 <style scoped>
-/* Add these new styles for the stepper */
+/* Stepper Styles (unchanged) */
 .stepper-container {
   display: flex;
   align-items: center;
@@ -556,12 +213,12 @@ onMounted(() => {
   align-items: center;
   text-align: center;
   position: relative;
-  flex-shrink: 0; /* Prevent shrinking */
-  padding: 0 10px; /* Add some padding */
+  flex-shrink: 0;
+  padding: 0 10px;
 }
 
 .stepper-icon {
-  font-size: 40px; /* Adjust icon size */
+  font-size: 40px;
   color: grey;
 }
 
@@ -569,15 +226,15 @@ onMounted(() => {
   font-size: 0.9em;
   color: grey;
   margin-top: 5px;
-  white-space: nowrap; /* Keep text on one line */
+  white-space: nowrap;
 }
 
 .stepper-item.active .stepper-icon {
-  color: #1976D2; /* Primary color for active icon */
+  color: #1976D2;
 }
 
 .stepper-item.active .stepper-text {
-  color: #000; /* Darker text for active step */
+  color: #000;
   font-weight: bold;
 }
 
@@ -587,4 +244,57 @@ onMounted(() => {
   background-color: grey;
   margin: 0 10px;
 }
+
+/* New styles for document cards */
+.document-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 120px; /* Ensure a consistent height for cards */
+  /* This is key for outlined cards - ensure a border is always there */
+  border: 2px solid var(--v-theme-surface-variant) !important; /* Use a Vuetify color variable for consistency, or a neutral grey */
+}
+
+.document-card:hover {
+  background-color: #e3f2fd !important; /* Light blue on hover */
+  border-color: #90caf9 !important; /* Lighter primary border */
+}
+
+.document-card .v-icon {
+  transition: color 0.3s ease;
+}
+
+.document-card:hover .v-icon {
+  color: #1976D2 !important; /* Ensure icon color changes on hover */
+}
+
+/* Status-specific styles for the entire card */
+.completed-card {
+  border-color: #4CAF50 !important; /* Green border for completed */
+  background-color: #E8F5E9 !important; /* Light green background for completed */
+}
+
+/* This targets cards that have been visited but not completed */
+.not-completed-card {
+  border-color: #FF5252 !important; /* Red border for not completed (but visited) */
+  background-color: #FFEBEE !important; /* Light red background for not completed */
+}
+
+/* Override hover effect for completed cards to maintain green appearance */
+.completed-card:hover {
+  background-color: #C8E6C9 !important; /* Slightly darker green on hover for completed */
+  border-color: #4CAF50 !important;
+}
+
+/* Override hover effect for not-completed cards to maintain red appearance */
+.not-completed-card:hover {
+  background-color: #FFCDD2 !important; /* Slightly darker red on hover for not completed */
+  border-color: #FF5252 !important;
+}
+
+/* Ensure default hover on non-selected/non-completed cards is also visually distinct */
+.document-card:not(.completed-card):not(.not-completed-card):hover {
+  border-color: #90CAF9 !important; /* Default blue hover for unvisited cards */
+  background-color: #E3F2FD !important;
+}
+
 </style>
